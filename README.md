@@ -40,7 +40,9 @@
 | `web/static/app.js` | 主题、进度、自测、章节高亮、搜索、PWA 注册 |
 | `web/static/sw.js` | 离线缓存（导航 network-first，静态资源 cache-first） |
 | `build_all.sh` | 一键全量：Word 构建 + 自检 + 网页构建 |
-| `deploy.sh` | 全量构建后部署到 Cloudflare Pages |
+| `deploy.sh` | 本机全量构建后部署；优先读 Cloudflare 环境变量，否则回退到 `cf` 登录态 |
+| `.github/workflows/pages.yml` | GitHub Actions：PR 只构建自检；推送到 `main` 或在 `main` 上手动运行则部署 |
+| `inbox/` | 还没写进小抄的原始笔记；构建不读取。处理步骤见 `AGENTS.md` |
 | `导出对话/` | 真题复盘对话的原始导出（Gemini JSON），新增条目的来源；构建不读取 |
 
 `site/` 是构建产物，不要手改；每次构建会整体重建。
@@ -48,8 +50,8 @@
 ## 版本管理
 
 - 仓库：<https://github.com/userAlex110/math-cheatsheet>（公开）。
-- 只入库**内容与构建脚本**：`content.py`、构建脚本、网页静态资源、`导出对话/`。`site/`、`*.docx`、`.mathcache/`、`.preview_tmp/`、`node_modules/` 都在 `.gitignore` 里，随时能重建，不进历史。
-- 日常流程：改 `content.py` → `./build_all.sh` 自检 → `git add -A && git commit -m "..." && git push` → `./deploy.sh` 上线。
+- 只入库**内容与构建脚本**：`content.py`、构建脚本、网页静态资源、`导出对话/`、`inbox/`。`site/`、`*.docx`、`.mathcache/`、`.preview_tmp/`、`node_modules/` 都在 `.gitignore` 里，随时能重建，不进历史。
+- 日常流程：笔记先放 `inbox/` → 改 `content.py` → `./build_all.sh` 自检 → 开 Pull Request（CI 只构建和自检）→ 合并到 `main`。合并会触发生产部署，地址仍是 <https://math-cheatsheet.pages.dev>。
 
 ## 重新生成
 
@@ -83,17 +85,36 @@ uv run --no-project --with python-docx python -B check_docx.py 数学小抄_数�
 
 ## 部署
 
+生产环境由 GitHub Actions 直接上传到 Cloudflare Pages，项目 `math-cheatsheet`，地址仍是 <https://math-cheatsheet.pages.dev>。
+
+| 事件 | 做什么 |
+| --- | --- |
+| Pull Request | `./build_all.sh`（Word 构建、自检、网页构建），不部署 |
+| 推送到 `main` | 同上，然后部署到生产 |
+| 在 `main` 上手动运行「构建与部署」 | 与推送到 `main` 相同 |
+
+部署命令固定为：
+
 ```bash
-./deploy.sh
-# 内部依次执行：
-# ./build_all.sh
-# npx wrangler pages deploy site --project-name math-cheatsheet --branch main
+npx wrangler@4.152.0 pages deploy site --project-name math-cheatsheet --branch main
 ```
 
-- 需要已登录的 `cf` CLI：`cf auth login`；`deploy.sh` 会读取 cf 的本地登录态交给 wrangler。
-- `cf` v1 的 `cf pages deploy` 已不支持 legacy Pages，所以实际部署由 `npx wrangler` 完成。
-- 默认项目名 `math-cheatsheet`；要换项目可用 `PAGES_PROJECT=其他名字 ./deploy.sh`。
-- 换全新项目时先建一次：`npx wrangler pages project create 名字 --production-branch main --force`。
+`--branch main` 对应 Pages 的生产分支，所以更新的是 `math-cheatsheet.pages.dev`，不会另开一个预览地址。凭证用仓库已有的 Secrets：`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`。不要改 wrangler 的版本号。
+
+**合并到 `main` 会立刻更新线上小抄。** 内容改动先开 PR，看 CI 通过再合并。
+
+本机仍可一键构建并部署：
+
+```bash
+export CLOUDFLARE_API_TOKEN=...
+export CLOUDFLARE_ACCOUNT_ID=...
+./deploy.sh
+```
+
+`./deploy.sh` 先跑 `./build_all.sh`，再用上面同一条 wrangler 命令。已经设置这两个环境变量时直接用它们（不限 macOS）。没设 `CLOUDFLARE_API_TOKEN` 时，才回退到本机 `cf` CLI 登录态：默认读 macOS 的 `~/Library/Preferences/cloudflare/config/default.json`，其它路径用 `CF_CONFIG=/path/to/default.json ./deploy.sh`。这是旧路径。`cf` v1 的 `cf pages deploy` 不支持 legacy Pages，实际仍由 wrangler 上传。
+
+- 默认项目名 `math-cheatsheet`，分支 `main`。要换项目：`PAGES_PROJECT=其他名字 ./deploy.sh`；要换分支：`PAGES_BRANCH=其他分支 ./deploy.sh`。
+- 换全新项目时先建一次：`npx wrangler@4.152.0 pages project create 名字 --production-branch main --force`。
 - 账号没有自定义域名配额，使用 `*.pages.dev`。
 - 网页首次打开后由 Service Worker 缓存；断网或弱网仍可背诵。版本号变化会自动清旧缓存。
 
