@@ -1,0 +1,27 @@
+{
+  "name": "数学小抄 · 数二背诵版",
+  "short_name": "数学小抄",
+  "description": "考研数学二背诵小抄：只留公式、判定结论和触发词。",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FCFCFA",
+  "theme_color": "#FCFCFA",
+  "categories": ["education", "books"],
+  "icons": [
+    {
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

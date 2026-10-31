@@ -1,0 +1,8 @@
+{
+  "name": "math-cheatsheet-web",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "katex": "^0.19.1"
+  }
+}

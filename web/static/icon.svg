@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#FCFCFA"/>
+  <rect x="88" y="62" width="4" height="388" fill="#C0362C" opacity=".42"/>
+  <rect x="128" y="296" width="300" height="110" fill="#FFE9A0"/>
+  <text x="278" y="358" text-anchor="middle" font-family="Songti SC, Noto Serif SC, Source Han Serif SC, SimSun, serif" font-size="250" font-weight="600" fill="#1A1A1A">数</text>
+  <text x="398" y="438" text-anchor="middle" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="56" fill="#C0362C">二</text>
+</svg>
